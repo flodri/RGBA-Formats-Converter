@@ -4,15 +4,17 @@ from PIL import Image, ImageTk
 from math import *
 from tkinter import messagebox
 
+#C:\Users\flodri\Desktop\RGBA-Formats-Converter-master\testA.png
+
 # Notes :
 # and here we get a callback when the user hits return.
 #self.entry_source.bind('<Key-Return>',
 #                      self.print_source_path)
 
-preset_to_config = {'old seus to labPBR 1.3':'R = r\nG = int(sqrt(g/255)*0.9) # convert to perceptual smoothness then to 0-239 range\nB = 0\nA = 255',
-                    'old continuum to labPBR 1.3':'R = b\nG = int(r*0.9)\nB = 0\nA = a',
-                    'pbr+emissive (old BSL) to labPBR 1.3':'R = r\nG = int(sqrt(g/255)*0.9) # convert to perceptual smoothness then to 0-239 range\nB = 0\nA = b',#b faut check so c'est toujours pareil dans labpbr 1.3
-                    "gray to labPBR 1.3 (you probably won't get good results)":'#magic number are 1-x of the one in ITU-R 601-2 (L=R*299/1000+G*587/1000+B*114/1000)\nR = int(r*0.701)\nG = int(g*0.413*0.9)\nB = 0\nA = 255',
+preset_to_config = {'old seus to labPBR 1.3':'R = 255*round(sqrt(r/255)) # convert to perceptual smoothness\nG = round(g*0.8980392156862745) # 0-229 range\nB = 0\nA = 255',
+                    'old continuum to labPBR 1.3':'R = b\nG = round(g*0.8980392156862745) # 0-229 range\nB = 0\nA = a',
+                    'pbr+emissive (old BSL) to labPBR 1.3':'R = 255*round(sqrt(r/255)) # convert to perceptual smoothness\nG = round(g*0.8980392156862745) # 0-229 range\nB = 0\nA = b-1 # 1-255 to 0-254 range and 0 become 255 with underflow',
+                    "gray to labPBR 1.3 (you probably won't get good results)":'#magic number are 1-x of the one in ITU-R 601-2 (L=R*299/1000+G*587/1000+B*114/1000)\nR = int(r*0.701)\nG = int(g*0.3708901960784314) # 0.3708901960784314 = 0.413*0.8980392156862745\nB = 0\nA = 255',
                     'Custom preset':'R = r\nG = g\nB = b\nA = a'}
 
 def try_to_open(source_path):
@@ -28,7 +30,7 @@ class Application(tk.Frame):
         self.pack(fill = tk.BOTH,
                   expand=True)
         self.create_widgets()
-
+ 
     def create_widgets(self):
         
         ### Convert button :
@@ -202,13 +204,18 @@ class Application(tk.Frame):
 
     def get_expressions(self):
         config_text = self.config_box.get("1.0", tk.END)
-        R_expression = config_text[config_text.find('R =')+3:config_text.find('G =')-1]
-        G_expression = config_text[config_text.find('G =')+3:config_text.find('B =')-1]
-        B_expression = config_text[config_text.find('B =')+3:config_text.find('A =')-1]
-        A_expression = config_text[config_text.find('A =')+3::]
+        R_expression = config_text[config_text.find('R =')+4:config_text.find('G =')-1]
+        G_expression = config_text[config_text.find('G =')+4:config_text.find('B =')-1]
+        B_expression = config_text[config_text.find('B =')+4:config_text.find('A =')-1]
+        A_expression = config_text[config_text.find('A =')+4::]
+        R_expression = compile(R_expression, 'NoSource', 'eval')
+        G_expression = compile(G_expression, 'NoSource', 'eval')
+        B_expression = compile(B_expression, 'NoSource', 'eval')
+        A_expression = compile(A_expression, 'NoSource', 'eval')
         return R_expression, G_expression, B_expression, A_expression
 
     def convert(self, img):
+        if img.mode != "RGBA": img = img.convert("RGBA")
         l, h = img.size
         being_converted = img.copy() #otherwise it modify the original which bug preview
         for x in range(l):
@@ -223,48 +230,46 @@ class Application(tk.Frame):
                 A = eval(self.A_expression)
                 # just to make sure, in case it's a custom config :
                 if R >= 255: R = 255
-                elif R <= 0: R = 0
+                elif R < 0: R = 255 + R
                 if G >= 255: G = 255
-                elif G <= 0: G = 0
+                elif G < 0: G = 255 + R
                 if B >= 255: B = 255
-                elif B <= 0: B = 0
+                elif B < 0: B = 255 + R
                 if A >= 255: A = 255
-                elif A <= 0: A = 0
+                elif A < 0: A = 255 + R
                 being_converted.putpixel((x,y), (R, G, B, A))
         return being_converted
     
     def convert_img(self, preview=False):
-
         # get what we have to convert :
         to_convert_list = []
-        try:
-            source_path = self.source_path.get()
-            filter_on = self.filter_on.get()
-            filter_used = self.filter_used.get()
-            if os.path.isfile(source_path):
-                tried = try_to_open(source_path)
-                if tried is None:
-                    messagebox.showwarning('Unsuported, or not a image.', 'This file is either in a unsuported format, or not a image.')
-                    return None
-                else: to_convert_list = [(tried, source_path)]
+        
+        source_path = self.source_path.get()
+        filter_on = self.filter_on.get()
+        filter_used = self.filter_used.get()
+        if os.path.isfile(source_path):
+            tried = try_to_open(source_path)
+            if tried is None:
+                messagebox.showwarning('Unsuported, or not a image.', 'This file is either in a unsuported format, or not a image.')
+                return None
+            else: to_convert_list = [(tried, source_path)]
 
-            elif os.path.isdir(source_path):
-                to_convert_list = []
-                for file_name in os.listdir(source_path):
-                    if os.path.isfile(file_name):
-                        if filter_on:
-                            if filter_used in file_name:
-                                tried = try_to_open(os.path.join(source_path, file_name))
-                                if tried is not None: to_convert_list.append((tried, file_name))
-                        else:
+        # à partir de là, todo pour la récursion
+        elif os.path.isdir(source_path):
+            for file_name in os.listdir(source_path):
+                if os.path.isfile(file_name):
+                    if filter_on:
+                        if filter_used in file_name:
                             tried = try_to_open(os.path.join(source_path, file_name))
                             if tried is not None: to_convert_list.append((tried, file_name))
+                    else:
+                        tried = try_to_open(os.path.join(source_path, file_name))
+                        if tried is not None: to_convert_list.append((tried, file_name))
 
-                if len(to_convert_list) == 0:
-                    messagebox.showwarning('No images in directory.', 'There is no compatible image in the specified directory.')
-                    return None
-            else: raise NotADirectoryError
-        except:
+            if len(to_convert_list) == 0:
+                messagebox.showwarning('No images in directory.', 'There is no compatible image in the specified directory.')
+                return None
+        else:
             messagebox.showwarning('Not a valid path.', 'The current input path is not a folder of images or an image.')
             return None
 
@@ -273,12 +278,11 @@ class Application(tk.Frame):
             expressions = self.get_expressions()
             self.R_expression, self.G_expression, self.B_expression, self.A_expression = expressions
         except:
-            messagebox.showwarning('Invalid config syntax.', 'The current config is incorrectly written.')
+            messagebox.showwarning('Invalid config.', 'The current config seems to cause issues.')
             return None
 
         # then we convert :
         if preview:
-            #try:
             old = to_convert_list[0][0]
             new = self.convert(old)
             print(f"size : {old.size}")
@@ -289,17 +293,13 @@ class Application(tk.Frame):
             self.old_img_canvas.create_image(65, 65, image = self.old_tkv)
             self.new_tkv = ImageTk.PhotoImage(new)
             self.new_img_canvas.create_image(65, 65, image = self.new_tkv)
-            print('patate')
-            #except:
-            #    messagebox.showwarning('Invalid config.', 'The current config seems to cause issues.')
-            #    return None
         else:
             output_path = self.output_path.get() #source path is already get above, hence why it's only output_path here
             for to_convert in to_convert_list:
                 try:
                     img = self.convert(to_convert[0])
                 except:
-                    messagebox.showwarning('Invalid config.', 'The current config seems to cause issues.')
+                    messagebox.showwarning('Config caused crash during conversion.', 'The current config is a valid syntax but must have some problems (most likely a 0div) as it caused a crash during conversion.')
                     return None
                 if self.overwrite_on.get(): img.save(os.path.join(source_path, to_convert[1]))
                 else: img.save(os.path.join(output_path, to_convert[1]))
