@@ -1,4 +1,4 @@
-Version : 0.1 (04/07/2020)
+Version : 0.2 (27/07/2020)
 
 To run the .py (source) version, you'll need :
 - to have python 3.6 or more
@@ -13,5 +13,8 @@ If you need more informations or help,
 here is my discord server : https://discord.gg/gbEdcxW
 
 Changelog :
+0.2 (27/07/2020)
+  - fix presets
+  - improved perf
 0.1 (04/07/2020)
   - This thing now exist
