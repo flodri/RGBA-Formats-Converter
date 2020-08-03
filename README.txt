@@ -16,5 +16,8 @@ Changelog :
 0.2 (27/07/2020)
   - fix presets
   - improved perf
+  - sub-folder propagation is now a option (work only when overwrite is enable)
+  - removed some print
+  - improved feedback a bit
 0.1 (04/07/2020)
   - This thing now exist
