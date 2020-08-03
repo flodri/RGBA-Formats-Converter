@@ -263,11 +263,11 @@ class Application(tk.Frame):
                 if R >= 255: R = 255
                 elif R < 0: R = 255 + R
                 if G >= 255: G = 255
-                elif G < 0: G = 255 + R
+                elif G < 0: G = 255 + G
                 if B >= 255: B = 255
-                elif B < 0: B = 255 + R
+                elif B < 0: B = 255 + B
                 if A >= 255: A = 255
-                elif A < 0: A = 255 + R
+                elif A < 0: A = 255 + A
                 being_converted.putpixel((x,y), (R, G, B, A))
         return being_converted
     
