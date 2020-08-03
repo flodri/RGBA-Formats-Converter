@@ -4,20 +4,35 @@ from PIL import Image, ImageTk
 from math import *
 from tkinter import messagebox
 
+#C:\Users\flodri\Desktop\RGBA-Formats-Converter-master\testA.png
+
 # Notes :
 # and here we get a callback when the user hits return.
 #self.entry_source.bind('<Key-Return>',
 #                      self.print_source_path)
 
-preset_to_config = {'old seus to labPBR 1.3':'R = r\nG = int(sqrt(g/255)*0.9) # convert to perceptual smoothness then to 0-239 range\nB = 0\nA = 255',
-                    'old continuum to labPBR 1.3':'R = b\nG = int(r*0.9)\nB = 0\nA = a',
-                    'pbr+emissive (old BSL) to labPBR 1.3':'R = r\nG = int(sqrt(g/255)*0.9) # convert to perceptual smoothness then to 0-239 range\nB = 0\nA = b',#b faut check so c'est toujours pareil dans labpbr 1.3
-                    "gray to labPBR 1.3 (you probably won't get good results)":'#magic number are 1-x of the one in ITU-R 601-2 (L=R*299/1000+G*587/1000+B*114/1000)\nR = int(r*0.701)\nG = int(g*0.413*0.9)\nB = 0\nA = 255',
+preset_to_config = {'old seus to labPBR 1.3':'R = 255*round(sqrt(r/255)) # convert to perceptual smoothness\nG = round(g*0.8980392156862745) # 0-229 range\nB = 0\nA = 255',
+                    'old continuum to labPBR 1.3':'R = b\nG = round(g*0.8980392156862745) # 0-229 range\nB = 0\nA = a',
+                    'pbr+emissive (old BSL) to labPBR 1.3':'R = 255*round(sqrt(r/255)) # convert to perceptual smoothness\nG = round(g*0.8980392156862745) # 0-229 range\nB = 0\nA = b-1 # 1-255 to 0-254 range and 0 become 255 with underflow',
+                    "gray to labPBR 1.3 (you probably won't get good results)":'#magic number are 1-x of the one in ITU-R 601-2 (L=R*299/1000+G*587/1000+B*114/1000)\nR = int(r*0.701)\nG = int(g*0.3708901960784314) # 0.3708901960784314 = 0.413*0.8980392156862745\nB = 0\nA = 255',
                     'Custom preset':'R = r\nG = g\nB = b\nA = a'}
 
 def try_to_open(source_path):
     try: return Image.open(source_path)
     except: return None
+
+def add_imgs_with_propagation(source_path,to_convert_list,filter_on):
+    for file_name in os.listdir(source_path):
+        file_path = os.path.join(source_path, file_name)
+        if os.path.isfile(file_path):
+            if filter_on:
+                if filter_used in file_name:
+                    tried = try_to_open(file_path)
+                    if tried is not None: to_convert_list.append((tried, file_path))
+            else:
+                tried = try_to_open(file_path)
+                if tried is not None: to_convert_list.append((tried, file_path))
+        else: add_imgs_with_propagation(file_path,to_convert_list,filter_on)
 
 class Application(tk.Frame):
     def __init__(self, master=None):
@@ -28,7 +43,7 @@ class Application(tk.Frame):
         self.pack(fill = tk.BOTH,
                   expand=True)
         self.create_widgets()
-
+ 
     def create_widgets(self):
         
         ### Convert button :
@@ -115,8 +130,26 @@ class Application(tk.Frame):
                                         text = 'overwrite original instead of outputing to output path',
                                         bg = '#2F3136',
                                         fg = '#FFFFFF')
+        
+        self.propagate_frame = tk.Frame(bg = '#2F3136')
+        self.propagate_frame.pack(fill = tk.X)
+        
+        self.propagate_on = tk.BooleanVar()
+        self.propagate_check = tk.Checkbutton(master = self.propagate_frame,
+                                              variable = self.propagate_on,
+                                              onvalue = True,
+                                              offvalue = False,
+                                              bg = '#2F3136',
+                                              fg = '#000000',
+                                              activebackground = '#2F3136',
+                                              activeforeground = '#000000')
 
-        for widget in (self.filter_check, self.filter_start_label, self.filter_entry, self.filter_end_label, self.overwrite_check, self.overwrite_label):
+        self.propagate_label = tk.Label(master = self.propagate_frame,
+                                        text = 'propagate the conversion to sub-folder (work only in overwrite mode)',
+                                        bg = '#2F3136',
+                                        fg = '#FFFFFF')
+
+        for widget in (self.filter_check, self.filter_start_label, self.filter_entry, self.filter_end_label, self.overwrite_check, self.overwrite_label, self.propagate_check, self.propagate_label):
             widget.pack(side = "left")
 
 
@@ -202,13 +235,18 @@ class Application(tk.Frame):
 
     def get_expressions(self):
         config_text = self.config_box.get("1.0", tk.END)
-        R_expression = config_text[config_text.find('R =')+3:config_text.find('G =')-1]
-        G_expression = config_text[config_text.find('G =')+3:config_text.find('B =')-1]
-        B_expression = config_text[config_text.find('B =')+3:config_text.find('A =')-1]
-        A_expression = config_text[config_text.find('A =')+3::]
+        R_expression = config_text[config_text.find('R =')+4:config_text.find('G =')-1]
+        G_expression = config_text[config_text.find('G =')+4:config_text.find('B =')-1]
+        B_expression = config_text[config_text.find('B =')+4:config_text.find('A =')-1]
+        A_expression = config_text[config_text.find('A =')+4::]
+        R_expression = compile(R_expression, 'NoSource', 'eval')
+        G_expression = compile(G_expression, 'NoSource', 'eval')
+        B_expression = compile(B_expression, 'NoSource', 'eval')
+        A_expression = compile(A_expression, 'NoSource', 'eval')
         return R_expression, G_expression, B_expression, A_expression
 
     def convert(self, img):
+        if img.mode != "RGBA": img = img.convert("RGBA")
         l, h = img.size
         being_converted = img.copy() #otherwise it modify the original which bug preview
         for x in range(l):
@@ -223,33 +261,36 @@ class Application(tk.Frame):
                 A = eval(self.A_expression)
                 # just to make sure, in case it's a custom config :
                 if R >= 255: R = 255
-                elif R <= 0: R = 0
+                elif R < 0: R = 255 + R
                 if G >= 255: G = 255
-                elif G <= 0: G = 0
+                elif G < 0: G = 255 + G
                 if B >= 255: B = 255
-                elif B <= 0: B = 0
+                elif B < 0: B = 255 + B
                 if A >= 255: A = 255
-                elif A <= 0: A = 0
+                elif A < 0: A = 255 + A
                 being_converted.putpixel((x,y), (R, G, B, A))
         return being_converted
     
     def convert_img(self, preview=False):
-
-        # get what we have to convert :
         to_convert_list = []
-        try:
-            source_path = self.source_path.get()
-            filter_on = self.filter_on.get()
-            filter_used = self.filter_used.get()
-            if os.path.isfile(source_path):
-                tried = try_to_open(source_path)
-                if tried is None:
-                    messagebox.showwarning('Unsuported, or not a image.', 'This file is either in a unsuported format, or not a image.')
-                    return None
-                else: to_convert_list = [(tried, source_path)]
+        source_path  = self.source_path.get()
+        filter_on    = self.filter_on.get()
+        filter_used  = self.filter_used.get()
+        propagate_on = self.propagate_on.get()
+        overwrite_on = self.overwrite_on.get()
+        
+        # get what we have to convert :
+        if os.path.isfile(source_path):
+            tried = try_to_open(source_path)
+            if tried is None:
+                messagebox.showwarning('Unsuported, or not a image.', 'This file is either in a unsuported format, or not a image.')
+                return None
+            else: to_convert_list = [(tried, source_path)]
 
-            elif os.path.isdir(source_path):
-                to_convert_list = []
+        elif os.path.isdir(source_path):
+            if overwrite_on and propagate_on:
+                add_imgs_with_propagation(source_path,to_convert_list,filter_on)
+            else:
                 for file_name in os.listdir(source_path):
                     if os.path.isfile(file_name):
                         if filter_on:
@@ -260,11 +301,10 @@ class Application(tk.Frame):
                             tried = try_to_open(os.path.join(source_path, file_name))
                             if tried is not None: to_convert_list.append((tried, file_name))
 
-                if len(to_convert_list) == 0:
-                    messagebox.showwarning('No images in directory.', 'There is no compatible image in the specified directory.')
-                    return None
-            else: raise NotADirectoryError
-        except:
+            if len(to_convert_list) == 0:
+                messagebox.showwarning('No images in directory.', 'There is no compatible image in the specified directory.')
+                return None
+        else:
             messagebox.showwarning('Not a valid path.', 'The current input path is not a folder of images or an image.')
             return None
 
@@ -273,12 +313,11 @@ class Application(tk.Frame):
             expressions = self.get_expressions()
             self.R_expression, self.G_expression, self.B_expression, self.A_expression = expressions
         except:
-            messagebox.showwarning('Invalid config syntax.', 'The current config is incorrectly written.')
+            messagebox.showwarning('Invalid config.', 'The current config seems to cause issues.')
             return None
 
         # then we convert :
         if preview:
-            #try:
             old = to_convert_list[0][0]
             new = self.convert(old)
             print(f"size : {old.size}")
@@ -289,19 +328,18 @@ class Application(tk.Frame):
             self.old_img_canvas.create_image(65, 65, image = self.old_tkv)
             self.new_tkv = ImageTk.PhotoImage(new)
             self.new_img_canvas.create_image(65, 65, image = self.new_tkv)
-            print('patate')
-            #except:
-            #    messagebox.showwarning('Invalid config.', 'The current config seems to cause issues.')
-            #    return None
         else:
-            output_path = self.output_path.get() #source path is already get above, hence why it's only output_path here
+            output_path = self.output_path.get()
             for to_convert in to_convert_list:
                 try:
                     img = self.convert(to_convert[0])
                 except:
-                    messagebox.showwarning('Invalid config.', 'The current config seems to cause issues.')
+                    messagebox.showwarning('Config caused crash during conversion.', 'The current config have a valid syntax but must have some problems (most likely a 0div) as it caused a crash during conversion.')
                     return None
-                if self.overwrite_on.get(): img.save(os.path.join(source_path, to_convert[1]))
+                #save part :
+                if overwrite_on:
+                    if propagate_on: img.save(to_convert[1])
+                    else: img.save(os.path.join(source_path, to_convert[1]))
                 else: img.save(os.path.join(output_path, to_convert[1]))
         
         print("Done.")
@@ -311,7 +349,7 @@ class Application(tk.Frame):
         self.convert_img(preview = True)
 
     def print_source_path(self, event):
-        print("text = ",
+        print("source_path : ",
               self.source_path.get())
 
 root = tk.Tk()
