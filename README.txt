@@ -14,7 +14,7 @@ here is my discord server : https://discord.gg/gbEdcxW
 
 Changelog :
 0.3 (09/09/2020)
-  - you can now chose source and target folder with the "..." buttons
+  - you can now choose source and target folder with the "..." buttons
   - A warning box is displayed when the conversion finish successfully
   - docstrings have been added to the convert() and convert_img() methods
 0.2 (27/07/2020)
