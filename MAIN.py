@@ -274,6 +274,8 @@ class Application(tk.Frame):
         return R_expression, G_expression, B_expression, A_expression
 
     def convert(self, img):
+        """ Return the converted version of img.
+        """
         if img.mode != "RGBA": img = img.convert("RGBA")
         l, h = img.size
         being_converted = img.copy() #otherwise it modify the original which bug preview
@@ -281,8 +283,7 @@ class Application(tk.Frame):
             for y in range(h):
                 r, g, b, a = being_converted.getpixel((x, y))
                 # I know, "eVal iS DanGErOUs", but you literally see what's gonna be inputed if you take the preset from someone
-                # What *is* eval, however, is slow, so i'll have to change it eventually
-                # Also the try block being executed each loop is not ideal...
+                # What *is* eval, however, is slow, but that's why compile() is used
                 R = eval(self.R_expression)
                 G = eval(self.G_expression)
                 B = eval(self.B_expression)
@@ -300,6 +301,13 @@ class Application(tk.Frame):
         return being_converted
     
     def convert_img(self, preview=False):
+        """ Apply convert() to the images in source_path, and save them in output_path.
+            Except if :
+                - self.filter_on is True, it apply convert() only to the remaining image
+                - self.propagate_on is True, it convert sub_floder images too (need self.overwrite_on = True)
+                - self.overwrite_on is True, it save them in their original location
+                - preview is True, it take the first image to convert and display it converted in preview
+        """
         to_convert_list = []
         source_path  = self.source_path.get()
         filter_on    = self.filter_on.get()
@@ -371,6 +379,7 @@ class Application(tk.Frame):
                 else: img.save(os.path.join(output_path, to_convert[1]))
         
         print("Done.")
+        messagebox.showwarning('Conversion complete.', 'Done.\nNo errors where encoutered during the conversion.')
 
     def display_preview(self):
         """ convert one image with current preset, don't save it and display it """
