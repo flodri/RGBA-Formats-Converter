@@ -60,25 +60,47 @@ class Application(tk.Frame):
 
 
         ### Source and cible path :
-        self.source_cible_frame = tk.Frame(bg = '#202225')
-        self.source_cible_frame.pack(fill = tk.BOTH,
-                                     expand=True)
+        # source :
+        self.source_frame = tk.Frame(bg = '#202225')
         
-        self.entry_source = tk.Entry(master = self.source_cible_frame)
-        self.entry_output = tk.Entry(master = self.source_cible_frame)
+        self.source_frame.pack(fill = tk.BOTH, expand=True)
+        self.entry_source = tk.Entry(master = self.source_frame)
+
+        self.source_path = tk.StringVar()
+        self.source_path.set("put the source path here. It can be a folder with images inside, or directly the path to a image.")
+        self.entry_source["textvariable"] = self.source_path
+        
+        self.source_button = tk.Button(self.source_frame,
+                                       bg = '#40444B',
+                                       fg = '#FFFFFF')
+        self.source_button["text"] = "..."
+        self.source_button["command"] = self.open_source_dir_windows
+
+        # cible/output :
+        self.cible_frame = tk.Frame(bg = '#202225')
+        self.cible_frame.pack(fill = tk.BOTH, expand=True)
+        
+        self.entry_output = tk.Entry(master = self.cible_frame)
+
+        self.output_path = tk.StringVar()
+        self.output_path.set("put the ouput path here.")
+        
+        self.entry_output["textvariable"] = self.output_path
+        
+        self.cible_button = tk.Button(self.cible_frame,
+                                      bg = '#40444B',
+                                      fg = '#FFFFFF')
+        self.cible_button["text"] = "..."
+        self.cible_button["command"] = self.open_cible_dir_windows
+        
+        #packing :
         for widget in (self.entry_source, self.entry_output):
             widget.configure(bg = '#40444B',
                              fg = '#FFFFFF',
                              insertbackground = '#FFFFFF')
-            widget.pack(padx=10, pady=10, fill = tk.X)
+            widget.pack(padx=10, pady=10, fill = tk.X, side = "left", expand=True)
 
-        self.source_path = tk.StringVar()
-        self.source_path.set("put the source path here. It can be a folder with images inside, or directly the path to a image.")
-        self.output_path = tk.StringVar()
-        self.output_path.set("put the ouput path here.")
-
-        self.entry_source["textvariable"] = self.source_path
-        self.entry_output["textvariable"] = self.output_path
+        for widget in (self.source_button, self.cible_button):  widget.pack(padx=5, side = "left")
         
 
         ### checkboxes :
@@ -233,6 +255,12 @@ class Application(tk.Frame):
         self.config_box.delete("1.0", tk.END)
         self.config_box.insert("1.0", preset_to_config[self.selected_preset.get()])
 
+    def open_source_dir_windows(self):
+        pass
+    
+    def open_cible_dir_windows(self):
+        pass
+
     def get_expressions(self):
         config_text = self.config_box.get("1.0", tk.END)
         R_expression = config_text[config_text.find('R =')+4:config_text.find('G =')-1]
@@ -246,6 +274,8 @@ class Application(tk.Frame):
         return R_expression, G_expression, B_expression, A_expression
 
     def convert(self, img):
+        """ Return the converted version of img.
+        """
         if img.mode != "RGBA": img = img.convert("RGBA")
         l, h = img.size
         being_converted = img.copy() #otherwise it modify the original which bug preview
@@ -272,6 +302,13 @@ class Application(tk.Frame):
         return being_converted
     
     def convert_img(self, preview=False):
+        """ Apply convert() to the images in source_path, and save them in output_path.
+            Except if :
+                - self.filter_on is True, it apply convert() only to the remaining image
+                - self.propagate_on is True, it convert sub_floder images too (need self.overwrite_on = True)
+                - self.overwrite_on is True, it save them in their original location
+                - preview is True, it take the first image to convert and display it converted in preview
+        """
         to_convert_list = []
         source_path  = self.source_path.get()
         filter_on    = self.filter_on.get()
@@ -343,6 +380,7 @@ class Application(tk.Frame):
                 else: img.save(os.path.join(output_path, to_convert[1]))
         
         print("Done.")
+        messagebox.showwarning('Conversion complete.', 'Done.\nNo errors where encoutered during the conversion.')
 
     def display_preview(self):
         """ convert one image with current preset, don't save it and display it """
