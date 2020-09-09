@@ -3,6 +3,7 @@ import os
 from PIL import Image, ImageTk
 from math import *
 from tkinter import messagebox
+from tkinter import filedialog
 
 #C:\Users\flodri\Desktop\RGBA-Formats-Converter-master\testA.png
 
@@ -256,10 +257,10 @@ class Application(tk.Frame):
         self.config_box.insert("1.0", preset_to_config[self.selected_preset.get()])
 
     def open_source_dir_windows(self):
-        pass
+        self.source_path.set(filedialog.askdirectory())
     
     def open_cible_dir_windows(self):
-        pass
+        self.output_path.set(filedialog.askdirectory())
 
     def get_expressions(self):
         config_text = self.config_box.get("1.0", tk.END)
@@ -283,8 +284,7 @@ class Application(tk.Frame):
             for y in range(h):
                 r, g, b, a = being_converted.getpixel((x, y))
                 # I know, "eVal iS DanGErOUs", but you literally see what's gonna be inputed if you take the preset from someone
-                # What *is* eval, however, is slow, so i'll have to change it eventually
-                # Also the try block being executed each loop is not ideal...
+                # What *is* eval, however, is slow, but that's why compile() is used
                 R = eval(self.R_expression)
                 G = eval(self.G_expression)
                 B = eval(self.B_expression)
