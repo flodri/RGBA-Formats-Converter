@@ -1,4 +1,4 @@
-Version : 0.2 (27/07/2020)
+Version : 0.3 (09/09/2020)
 
 To run the .py (source) version, you'll need :
 - to have python 3.6 or more
@@ -13,6 +13,10 @@ If you need more informations or help,
 here is my discord server : https://discord.gg/gbEdcxW
 
 Changelog :
+0.3 (09/09/2020)
+  - you can now chose source and target folder with the "..." buttons
+  - A warning box is displayed when the conversion finish successfully
+  - docstrings have been added to the convert() and convert_img() methods
 0.2 (27/07/2020)
   - fix presets
   - improved perf
