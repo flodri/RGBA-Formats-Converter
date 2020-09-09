@@ -3,6 +3,7 @@ import os
 from PIL import Image, ImageTk
 from math import *
 from tkinter import messagebox
+from tkinter import filedialog
 
 #C:\Users\flodri\Desktop\RGBA-Formats-Converter-master\testA.png
 
@@ -256,10 +257,10 @@ class Application(tk.Frame):
         self.config_box.insert("1.0", preset_to_config[self.selected_preset.get()])
 
     def open_source_dir_windows(self):
-        pass
+        self.source_path.set(filedialog.askdirectory())
     
     def open_cible_dir_windows(self):
-        pass
+        self.output_path.set(filedialog.askdirectory())
 
     def get_expressions(self):
         config_text = self.config_box.get("1.0", tk.END)
