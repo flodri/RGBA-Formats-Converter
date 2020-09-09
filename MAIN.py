@@ -60,25 +60,47 @@ class Application(tk.Frame):
 
 
         ### Source and cible path :
-        self.source_cible_frame = tk.Frame(bg = '#202225')
-        self.source_cible_frame.pack(fill = tk.BOTH,
-                                     expand=True)
+        # source :
+        self.source_frame = tk.Frame(bg = '#202225')
         
-        self.entry_source = tk.Entry(master = self.source_cible_frame)
-        self.entry_output = tk.Entry(master = self.source_cible_frame)
+        self.source_frame.pack(fill = tk.BOTH, expand=True)
+        self.entry_source = tk.Entry(master = self.source_frame)
+
+        self.source_path = tk.StringVar()
+        self.source_path.set("put the source path here. It can be a folder with images inside, or directly the path to a image.")
+        self.entry_source["textvariable"] = self.source_path
+        
+        self.source_button = tk.Button(self.source_frame,
+                                       bg = '#40444B',
+                                       fg = '#FFFFFF')
+        self.source_button["text"] = "..."
+        self.source_button["command"] = self.open_source_dir_windows
+
+        # cible/output :
+        self.cible_frame = tk.Frame(bg = '#202225')
+        self.cible_frame.pack(fill = tk.BOTH, expand=True)
+        
+        self.entry_output = tk.Entry(master = self.cible_frame)
+
+        self.output_path = tk.StringVar()
+        self.output_path.set("put the ouput path here.")
+        
+        self.entry_output["textvariable"] = self.output_path
+        
+        self.cible_button = tk.Button(self.cible_frame,
+                                      bg = '#40444B',
+                                      fg = '#FFFFFF')
+        self.cible_button["text"] = "..."
+        self.cible_button["command"] = self.open_cible_dir_windows
+        
+        #packing :
         for widget in (self.entry_source, self.entry_output):
             widget.configure(bg = '#40444B',
                              fg = '#FFFFFF',
                              insertbackground = '#FFFFFF')
-            widget.pack(padx=10, pady=10, fill = tk.X)
+            widget.pack(padx=10, pady=10, fill = tk.X, side = "left", expand=True)
 
-        self.source_path = tk.StringVar()
-        self.source_path.set("put the source path here. It can be a folder with images inside, or directly the path to a image.")
-        self.output_path = tk.StringVar()
-        self.output_path.set("put the ouput path here.")
-
-        self.entry_source["textvariable"] = self.source_path
-        self.entry_output["textvariable"] = self.output_path
+        for widget in (self.source_button, self.cible_button):  widget.pack(padx=5, side = "left")
         
 
         ### checkboxes :
@@ -232,6 +254,12 @@ class Application(tk.Frame):
     def display_config_text(self, *args):
         self.config_box.delete("1.0", tk.END)
         self.config_box.insert("1.0", preset_to_config[self.selected_preset.get()])
+
+    def open_source_dir_windows(self):
+        pass
+    
+    def open_cible_dir_windows(self):
+        pass
 
     def get_expressions(self):
         config_text = self.config_box.get("1.0", tk.END)
