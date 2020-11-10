@@ -1,4 +1,4 @@
-Version : 0.3 (09/09/2020)
+Version : 0.4 (10/11/2020)
 
 To run the .py (source) version, you'll need :
 - to have python 3.6 or more
@@ -13,6 +13,9 @@ If you need more informations or help,
 here is my discord server : https://discord.gg/gbEdcxW
 
 Changelog :
+0.4 (10/11/2020)
+  - fixed a bug where it would not detec file outside of propage mode
+  - checked options so that by default it's setup to convert a whole mc ressource pack
 0.3 (09/09/2020)
   - you can now choose source and target folder with the "..." buttons
   - A warning box is displayed when the conversion finish successfully

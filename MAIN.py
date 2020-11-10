@@ -128,7 +128,7 @@ class Application(tk.Frame):
                                      fg = '#FFFFFF',
                                      insertbackground = '#FFFFFF')
         self.filter_used = tk.StringVar()
-        self.filter_used.set("_s")
+        self.filter_used.set("_s.")
         self.filter_entry["textvariable"] = self.filter_used
 
         self.filter_end_label = tk.Label(master = self.filter_frame,
@@ -174,6 +174,10 @@ class Application(tk.Frame):
 
         for widget in (self.filter_check, self.filter_start_label, self.filter_entry, self.filter_end_label, self.overwrite_check, self.overwrite_label, self.propagate_check, self.propagate_label):
             widget.pack(side = "left")
+
+        self.filter_check.select()
+        self.overwrite_check.select()
+        self.propagate_check.select()
 
 
         ### See preview button :
@@ -326,10 +330,10 @@ class Application(tk.Frame):
 
         elif os.path.isdir(source_path):
             if overwrite_on and propagate_on:
-                add_imgs_with_propagation(source_path,to_convert_list,filter_on)
+                add_imgs_with_propagation(source_path, to_convert_list, filter_on)
             else:
                 for file_name in os.listdir(source_path):
-                    if os.path.isfile(file_name):
+                    if os.path.isfile(os.path.join(source_path, file_name)):
                         if filter_on:
                             if filter_used in file_name:
                                 tried = try_to_open(os.path.join(source_path, file_name))
